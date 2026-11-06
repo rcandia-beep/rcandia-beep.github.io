@@ -778,7 +778,9 @@ function norm(s){return String(s||"").toLowerCase().replace(/[’‘`´]/g,"'").
 function capName(s){return s.trim().replace(/\s+/g," ").split(" ").map(w=>w.charAt(0).toLocaleUpperCase("es")+w.slice(1).toLocaleLowerCase("es")).join(" ");}
 
 let S=null; // app state, defined by app
-function saveState(){try{localStorage.setItem(APP.key,JSON.stringify(S))}catch(e){}}
+let RESETTING=false;
+function saveState(){if(RESETTING||!S)return;try{localStorage.setItem(APP.key,JSON.stringify(S))}catch(e){}}
+function hardReset(){RESETTING=true;try{localStorage.removeItem(APP.key)}catch(e){}S=null;location.reload();}
 function loadState(){try{const s=JSON.parse(localStorage.getItem(APP.key));if(s&&s.v===APP.v)return s}catch(e){}return null}
 
 /* toast */
@@ -803,7 +805,7 @@ async function askPin(){
 }
 
 /* integrity */
-function integrityActive(){return S&&S.stage==="test";}
+function integrityActive(){return !RESETTING&&S&&S.stage==="test";}
 let awayAt=null;
 function logEv(type,extra){if(!integrityActive())return;S.log.push(Object.assign({type,t:Date.now()},extra||{}));saveState();}
 function away(){if(!integrityActive()||awayAt)return;awayAt=Date.now();}
@@ -832,7 +834,7 @@ function integrityHTML(){
 }
 
 /* watermark */
-function setWatermark(txt){const w=$("wm");w.innerHTML="";for(let i=0;i<70;i++){const s=document.createElement("span");s.textContent=txt;w.appendChild(s);}}
+function setWatermark(txt){const w=$("wm");w.innerHTML="";for(let i=0;i<36;i++){const s=document.createElement("span");s.textContent=txt;w.appendChild(s);}}
 
 /* ===== PDF helper ===== */
 function pdfSafe(s){return String(s==null?"":s).replace(/[✔✓]/g,"").replace(/[✗✘]/g,"x").replace(/[★⭐]/g,"*").replace(/→/g,"->").replace(/≈/g,"~").replace(/[^\x00-\xFF‘’“”–—…•€]/g,"").trim();}
@@ -1338,7 +1340,7 @@ $("btnTeacher").onclick=async()=>{
   if(!await askPin())return;
   const btns=[{t:"Cancel",cls:"b-no"},{t:"New student (reset)",cls:"b-yes"}];if(working())btns.push({t:"+2 minutes",cls:"b-go"});
   const r=await modal("Teacher options","<p>Reset deletes all answers on this device. “+2 minutes” adds time to the current section.</p>",btns);
-  if(r.i===1){try{localStorage.removeItem(APP.key)}catch(e){}location.reload();}
+  if(r.i===1){hardReset();}
   if(r.i===2&&working()){S.sec[curSec().id].deadline+=120000;saveState();toast("+2 minutes added");tick();}
 };
 /* hide bottom bar while typing on phones (keyboard) */
