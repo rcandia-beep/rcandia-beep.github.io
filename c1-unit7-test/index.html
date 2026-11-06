@@ -790,6 +790,7 @@ function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show")
 /* modal: returns a promise with the index of the button pressed */
 function modal(title,html,buttons){
   return new Promise(res=>{
+    if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
     const ov=$("ov");$("mdT").textContent=title;$("mdB").innerHTML=html;
     const bx=$("mdBtns");bx.innerHTML="";
     buttons.forEach((b,i)=>{const el=document.createElement("button");el.type="button";el.className=b.cls||"b-go";el.textContent=b.t;el.onclick=()=>{const v=$("mdIn")?$("mdIn").value:null;ov.classList.remove("show");res({i,v});};bx.appendChild(el);});
