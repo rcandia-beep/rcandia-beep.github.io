@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>C1 Speaking – Student A</title>
+<style>
+:root{--accent:#4f6bff;--accent2:#22d3ee;--bg:#0f1226;--card:#1b1f3b;--text:#f5f6ff;--muted:#b9bce0}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:radial-gradient(circle at top,#232a5c 0%,var(--bg) 60%);color:var(--text);min-height:100vh;padding:16px;text-align:center}
+header{margin-top:4px}
+.badge{display:inline-block;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:800;letter-spacing:1px;padding:6px 16px;border-radius:999px;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+h1{margin:10px 0 2px;font-size:26px}
+.sub{margin:0 0 10px;color:var(--muted);font-size:14px}
+.stats{font-size:15px;color:var(--muted);margin-bottom:8px}
+.stats b{color:#fff;font-size:20px}
+.wheelwrap{position:relative;width:min(88vw,430px);margin:0 auto}
+canvas{width:100%;height:auto;display:block;border-radius:50%;box-shadow:0 0 0 6px #fff2,0 10px 40px rgba(0,0,0,.5)}
+.pointer{position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-top:34px solid #fff;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5));z-index:2}
+#spin{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:26%;aspect-ratio:1;border-radius:50%;border:5px solid #fff;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:900;font-size:clamp(14px,4.5vw,20px);cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.5)}
+#spin:disabled{opacity:.7;cursor:default}
+.controls{margin:16px 0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+button.ghost{background:transparent;border:2px solid #fff5;color:#fff;padding:9px 16px;border-radius:999px;font-size:14px;cursor:pointer}
+.modal{position:fixed;inset:0;background:rgba(5,6,20,.82);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+.hidden{display:none}
+.card{background:var(--card);border-radius:20px;padding:22px 20px;max-width:560px;width:100%;border-top:8px solid var(--accent);box-shadow:0 20px 60px rgba(0,0,0,.6);text-align:left}
+.qnum{display:inline-block;background:var(--accent);color:#fff;font-weight:800;padding:4px 12px;border-radius:999px;font-size:13px}
+#qtext{font-size:clamp(19px,5vw,24px);line-height:1.4;margin:14px 0;font-weight:600}
+.timer{display:flex;align-items:center;gap:12px;margin:8px 0}
+#time{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent2)}
+.timer button,#close{border:none;border-radius:12px;padding:10px 16px;font-size:15px;font-weight:700;cursor:pointer}
+.timer button{background:#ffffff1f;color:#fff}
+#close{width:100%;margin-top:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:17px;padding:13px}
+.hint{color:var(--muted);font-size:14px;line-height:1.45;margin:10px 0 0}
+.tips h2{margin:0 0 8px;font-size:20px}
+.tips h3{margin:14px 0 4px;font-size:15px;color:var(--accent2)}
+.tips ul{margin:0;padding-left:18px;color:var(--text);font-size:14px;line-height:1.55}
+.done{font-size:20px;font-weight:700;margin:10px 0}
+</style>
+</head>
+<body>
+<header>
+  <div class="badge">STUDENT A</div>
+  <h1>C1 Speaking Wheel</h1>
+  <p class="sub">Spin the wheel, read the question aloud to your partner, then listen and follow up.</p>
+</header>
+<div class="stats"><b id="left">30</b> questions left</div>
+<div class="wheelwrap">
+  <div class="pointer"></div>
+  <canvas id="wheel" width="700" height="700"></canvas>
+  <button id="spin">SPIN</button>
+</div>
+<div id="doneMsg" class="done hidden">All questions done – brilliant work!</div>
+<div class="controls">
+  <button id="tipsBtn" class="ghost">Useful phrases</button>
+  <button id="reset" class="ghost">Reset wheel</button>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="card">
+    <span class="qnum" id="qnum"></span>
+    <p id="qtext"></p>
+    <div class="timer"><span id="time">1:30</span><button id="timerBtn">Start timer</button></div>
+    <p class="hint"><b>Partner:</b> develop your answer with reasons, examples and a conclusion.<br><b>You:</b> ask a follow-up: "Why do you think that?", "Could you give an example?", "What about the opposite view?"</p>
+    <button id="close">Done – next turn</button>
+  </div>
+</div>
+
+<div id="tipsModal" class="modal hidden">
+  <div class="card tips">
+    <h2>Useful C1 language</h2>
+    <h3>Buying time</h3>
+    <ul><li>That's a thought-provoking question…</li><li>It's not something I've given much thought to, but…</li><li>Let me think about that for a moment.</li></ul>
+    <h3>Giving and developing opinions</h3>
+    <ul><li>As far as I'm concerned, …</li><li>I'd go as far as to say that…</li><li>What's more, … / On top of that, …</li><li>A case in point would be…</li></ul>
+    <h3>Balancing and conceding</h3>
+    <ul><li>Admittedly, … but on the other hand…</li><li>That said, … / Having said that, …</li><li>It largely depends on…</li><li>While I see the point, I'm not entirely convinced that…</li></ul>
+    <h3>Concluding</h3>
+    <ul><li>All things considered, …</li><li>On balance, I'd say…</li></ul>
+    <button id="tipsClose" style="width:100%;margin-top:16px;border:none;border-radius:12px;padding:12px;font-weight:700;font-size:16px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;cursor:pointer">Close</button>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = ["To what extent do you think technology will improve our quality of life over the next few decades, and who might be left behind?", "Some argue that social media has done more to divide societies than to bring them together. How far do you agree?", "Should governments be allowed to restrict personal freedoms in order to protect the environment? Where would you draw the line?", "How has the idea of 'a successful career' changed since your parents' generation, and is this change a positive one?", "Is it ever justifiable to break the law in order to bring about social change? Can you think of any examples?", "To what extent should schools prioritise practical life skills, such as managing money, over traditional academic subjects?", "Many people claim we live in an age of information overload. How does this affect the way we think and make decisions?", "Should wealthy countries bear greater responsibility for tackling climate change than developing ones? Why or why not?", "How might artificial intelligence reshape the job market, and which human skills will become most valuable as a result?", "Is tourism a blessing or a curse for local communities? Consider its economic, cultural and environmental impact.", "To what extent is our personality shaped by our upbringing rather than by our genes?", "Do celebrities and influencers have a moral responsibility to act as role models for young people? Why or why not?", "How important is it to preserve minority and indigenous languages in a globalised world, and whose responsibility should it be?", "People often say that money cannot buy happiness. Based on your own experience and observations, how far is this true?", "What might be the long-term consequences for society if more and more people work from home?", "Should higher education be free for everyone? What would the potential drawbacks of such a policy be?", "How should cities be redesigned to cope with population growth and the effects of climate change?", "Is it possible for journalists to be truly objective when reporting the news? What does this mean for us as readers?", "In what ways do major global crises change people's priorities, and do those changes tend to last?", "To what extent should parents monitor or control their teenagers' online activity?", "Is competition in sport and education healthy, or does it ultimately do more harm than good?", "What role, if any, should art and music play in a country's education system?", "How far do you agree that consumerism is incompatible with a sustainable future?", "Should genetic engineering be used to eliminate hereditary diseases? What ethical dilemmas might this raise?", "What qualities make a good leader, and do you believe leaders are born or made?", "How has the way we form and maintain friendships changed in the digital age? Is it for better or worse?", "In today's world, is it wiser to specialise in one field or to develop a broad range of skills?", "Should unhealthy food and sugary drinks be taxed in the same way as tobacco? What might the consequences be?", "To what extent are traditions worth preserving if they no longer reflect modern values?", "If you could change one thing about the education system in your country, what would it be and why?"];
+const KEY = "c1wheelA_v1";
+const COLORS = ["#ff5e7e","#ffb547","#3ecf8e","#4aa8ff","#a66bff","#ff7ad9","#22d3ee","#f97316","#84cc16","#6366f1"];
+let remaining = QUESTIONS.map((_, i) => i);
+try { const s = JSON.parse(localStorage.getItem(KEY)); if (Array.isArray(s)) remaining = s.filter(i => i >= 0 && i < QUESTIONS.length); } catch (e) {}
+let rot = 0, spinning = false;
+const cv = document.getElementById("wheel"), ctx = cv.getContext("2d");
+const spinBtn = document.getElementById("spin");
+const R = cv.width / 2;
+
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(remaining)); } catch (e) {} }
+
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  const n = remaining.length;
+  document.getElementById("left").textContent = n;
+  document.getElementById("doneMsg").classList.toggle("hidden", n !== 0);
+  spinBtn.disabled = n === 0 || spinning;
+  if (n === 0){
+    ctx.fillStyle = "#2a2f5a"; ctx.beginPath(); ctx.arc(R,R,R,0,Math.PI*2); ctx.fill(); return;
+  }
+  const seg = Math.PI*2/n;
+  for (let i=0;i<n;i++){
+    const a0 = rot + i*seg, a1 = a0 + seg;
+    ctx.beginPath(); ctx.moveTo(R,R); ctx.arc(R,R,R-2,a0,a1); ctx.closePath();
+    ctx.fillStyle = n === 1 ? COLORS[remaining[0] % COLORS.length] : COLORS[i % COLORS.length];
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.save(); ctx.translate(R,R); ctx.rotate(a0 + seg/2);
+    ctx.fillStyle = "#fff"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    const fs = Math.max(18, Math.min(40, 380/n + 14));
+    ctx.font = "800 " + fs + "px Segoe UI, Roboto, Arial";
+    ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 4;
+    ctx.fillText(String(remaining[i] + 1), R - 22, 0);
+    ctx.restore();
+  }
+  ctx.beginPath(); ctx.arc(R,R,R-2,0,Math.PI*2); ctx.lineWidth = 8; ctx.strokeStyle = "#fff"; ctx.stroke();
+}
+
+function spin(){
+  if (spinning || remaining.length === 0) return;
+  spinning = true; spinBtn.disabled = true;
+  const n = remaining.length, seg = Math.PI*2/n;
+  const k = Math.floor(Math.random()*n);
+  const jitter = (Math.random()-0.5) * seg * 0.6;
+  const target = -Math.PI/2 - (k+0.5)*seg + jitter;
+  const TAU = Math.PI*2;
+  let delta = ((target - rot) % TAU + TAU) % TAU;
+  const start = rot, end = rot + delta + TAU*(5 + Math.floor(Math.random()*2));
+  const dur = 4200, t0 = performance.now();
+  function frame(t){
+    const p = Math.min(1,(t-t0)/dur), e = 1 - Math.pow(1-p,4);
+    rot = start + (end-start)*e; draw();
+    if (p < 1) requestAnimationFrame(frame);
+    else { rot = rot % TAU; setTimeout(() => reveal(k), 350); }
+  }
+  requestAnimationFrame(frame);
+}
+
+function reveal(k){
+  const qi = remaining[k];
+  document.getElementById("qnum").textContent = "Question " + (qi+1);
+  document.getElementById("qtext").textContent = QUESTIONS[qi];
+  remaining.splice(k,1); save();
+  resetTimer();
+  document.getElementById("modal").classList.remove("hidden");
+}
+
+let timerId = null, secs = 90;
+function fmt(s){ return Math.floor(s/60) + ":" + String(s%60).padStart(2,"0"); }
+function resetTimer(){ clearInterval(timerId); timerId = null; secs = 90; document.getElementById("time").textContent = fmt(secs); document.getElementById("timerBtn").textContent = "Start timer"; }
+document.getElementById("timerBtn").onclick = () => {
+  if (timerId){ resetTimer(); return; }
+  document.getElementById("timerBtn").textContent = "Stop";
+  timerId = setInterval(() => { secs--; document.getElementById("time").textContent = fmt(Math.max(0,secs)); if (secs <= 0){ clearInterval(timerId); timerId = null; document.getElementById("time").textContent = "Time!"; document.getElementById("timerBtn").textContent = "Restart"; } }, 1000);
+};
+document.getElementById("close").onclick = () => { resetTimer(); document.getElementById("modal").classList.add("hidden"); spinning = false; draw(); };
+spinBtn.onclick = spin;
+document.getElementById("reset").onclick = () => { if (confirm("Reset the wheel and bring back all 30 questions?")) { remaining = QUESTIONS.map((_, i) => i); save(); draw(); } };
+document.getElementById("tipsBtn").onclick = () => document.getElementById("tipsModal").classList.remove("hidden");
+document.getElementById("tipsClose").onclick = () => document.getElementById("tipsModal").classList.add("hidden");
+draw();
+</script>
+</body>
+</html>
